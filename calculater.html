@@ -1,0 +1,293 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Calculator</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #141e30, #243b55);
+    font-family: Arial, sans-serif;
+    padding: 15px;
+}
+
+.calculator {
+    width: 100%;
+    max-width: 350px;
+    background: #172338;
+    padding: 22px;
+    border-radius: 22px;
+    box-shadow: 0 15px 40px #0007;
+}
+
+h2 {
+    color: #00e5ff;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.display {
+    width: 100%;
+    height: 85px;
+    background: #0c1728;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    margin-bottom: 18px;
+    padding: 15px;
+    font-size: 32px;
+    text-align: right;
+    outline: none;
+}
+
+.buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+button {
+    height: 65px;
+    border: none;
+    border-radius: 12px;
+    background: #293b57;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+button:active {
+    transform: scale(0.94);
+    background: #405779;
+}
+
+.operator {
+    background: #087f9b;
+}
+
+.clear {
+    background: #e74c65;
+}
+
+.equal {
+    background: #00b894;
+    grid-column: span 2;
+}
+
+.zero {
+    grid-column: span 2;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="calculator">
+
+    <h2>Calculator</h2>
+
+    <input
+        type="text"
+        class="display"
+        id="display"
+        value="0"
+        readonly
+    >
+
+    <div class="buttons">
+
+        <button class="clear" onclick="clearDisplay()">C</button>
+        <button onclick="deleteLast()">⌫</button>
+        <button class="operator" onclick="percentage()">%</button>
+        <button class="operator" onclick="chooseOperator('/')">÷</button>
+
+        <button onclick="appendNumber('7')">7</button>
+        <button onclick="appendNumber('8')">8</button>
+        <button onclick="appendNumber('9')">9</button>
+        <button class="operator" onclick="chooseOperator('*')">×</button>
+
+        <button onclick="appendNumber('4')">4</button>
+        <button onclick="appendNumber('5')">5</button>
+        <button onclick="appendNumber('6')">6</button>
+        <button class="operator" onclick="chooseOperator('-')">−</button>
+
+        <button onclick="appendNumber('1')">1</button>
+        <button onclick="appendNumber('2')">2</button>
+        <button onclick="appendNumber('3')">3</button>
+        <button class="operator" onclick="chooseOperator('+')">+</button>
+
+        <button onclick="toggleSign()">±</button>
+        <button class="zero" onclick="appendNumber('0')">0</button>
+        <button onclick="appendNumber('.')">.</button>
+        <button class="equal" onclick="calculate()">=</button>
+
+    </div>
+</div>
+
+<script>
+
+const display = document.getElementById("display");
+
+let firstNumber = null;
+let operator = null;
+let waitingForSecondNumber = false;
+
+function appendNumber(number) {
+
+    if (display.value === "Error") {
+        display.value = "0";
+    }
+
+    if (waitingForSecondNumber) {
+        display.value = number === "." ? "0." : number;
+        waitingForSecondNumber = false;
+        return;
+    }
+
+    if (number === "." && display.value.includes(".")) {
+        return;
+    }
+
+    if (display.value === "0" && number !== ".") {
+        display.value = number;
+    } else {
+        display.value += number;
+    }
+}
+
+function chooseOperator(selectedOperator) {
+
+    const inputValue = Number(display.value);
+
+    if (!Number.isFinite(inputValue)) return;
+
+    if (operator && !waitingForSecondNumber) {
+        calculate();
+    }
+
+    firstNumber = Number(display.value);
+    operator = selectedOperator;
+    waitingForSecondNumber = true;
+}
+
+function calculate() {
+
+    if (operator === null || waitingForSecondNumber) return;
+
+    const secondNumber = Number(display.value);
+    let result;
+
+    switch (operator) {
+
+        case "+":
+            result = firstNumber + secondNumber;
+            break;
+
+        case "-":
+            result = firstNumber - secondNumber;
+            break;
+
+        case "*":
+            result = firstNumber * secondNumber;
+            break;
+
+        case "/":
+            if (secondNumber === 0) {
+                display.value = "Error";
+                operator = null;
+                firstNumber = null;
+                waitingForSecondNumber = true;
+                return;
+            }
+            result = firstNumber / secondNumber;
+            break;
+    }
+
+    display.value = String(Number(result.toPrecision(12)));
+
+    firstNumber = null;
+    operator = null;
+    waitingForSecondNumber = true;
+}
+
+function percentage() {
+
+    if (display.value === "Error") return;
+
+    display.value = String(Number(display.value) / 100);
+    waitingForSecondNumber = false;
+}
+
+function toggleSign() {
+
+    if (display.value === "Error") return;
+
+    display.value = String(-Number(display.value));
+}
+
+function deleteLast() {
+
+    if (display.value === "Error" || waitingForSecondNumber) {
+        display.value = "0";
+        waitingForSecondNumber = false;
+        return;
+    }
+
+    display.value = display.value.slice(0, -1) || "0";
+}
+
+function clearDisplay() {
+
+    display.value = "0";
+    firstNumber = null;
+    operator = null;
+    waitingForSecondNumber = false;
+}
+
+// Keyboard support
+
+document.addEventListener("keydown", (event) => {
+
+    if (/^[0-9.]$/.test(event.key)) {
+        appendNumber(event.key);
+    }
+
+    else if (["+", "-", "*", "/"].includes(event.key)) {
+        chooseOperator(event.key);
+    }
+
+    else if (event.key === "Enter" || event.key === "=") {
+        calculate();
+    }
+
+    else if (event.key === "Backspace") {
+        deleteLast();
+    }
+
+    else if (event.key === "Escape") {
+        clearDisplay();
+    }
+
+    else if (event.key === "%") {
+        percentage();
+    }
+});
+
+</script>
+
+</body>
+</html>
